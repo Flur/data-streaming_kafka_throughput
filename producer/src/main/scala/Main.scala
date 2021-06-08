@@ -7,11 +7,21 @@ import org.json4s.native.Serialization
 import org.json4s.native.Serialization.{read, write}
 
 import common.{ Subreddit }
+import scala.reflect.io.Directory
+import java.io.File
 
 object Main {
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
   def main(args: Array[String]): Unit = {
+
+    // delete folder with timestamps before write
+    val directory = new Directory(new File("./timestamps"))
+    directory.deleteRecursively()
+
+    // and create new empty directory
+    directory.createDirectory()
+
     writeToKafkaFromFile("quick-start", "small_reddit_subreddit_data.ndjson")
   }
 
@@ -25,10 +35,13 @@ object Main {
 
     val producer = new KafkaProducer[String, String](props)
 
+    println(s"Partitions in topic ${topic} is - ${producer.partitionsFor(topic).size}")
+
     for (line <- source.getLines()) {
       val subreddit = read[Subreddit](line)
 
-      val record = new ProducerRecord[String, String](topic, "key", write(subreddit))
+      // todo use kafka serde
+      val record = new ProducerRecord[String, String](topic, write(subreddit))
       producer.send(record)
     }
 
