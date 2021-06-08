@@ -13,4 +13,4 @@ project/plugins/project/
 .history
 .cache
 .lib/
-/timestamps.txt
+/timestamps/
